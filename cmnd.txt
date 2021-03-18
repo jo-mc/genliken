@@ -1,0 +1,1 @@
+samtools view -F256 hap2s.bam chr1 | awk '{  print $0 }' | sort  -k1,1 -k4,4 -n | awk 'BEGIN{OFS="\t"}{  if ( $1 != lastQ ) { i = i + 1; pos = $4; a = 1 } print pos, i, a, $0; lastQ = $1; a = a + 1 }' | sort -k1,1 -k3,3 -n | cut -f 4- | awk -f ../genliken.awk
