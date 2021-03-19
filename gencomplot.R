@@ -1,4 +1,4 @@
-# redox3
+# redox3  multi ??? in progress use single plot below..
 
 par(mfrow=c(5,1))    # https://bookdown.org/ndphillips/YaRrr/arranging-plots-with-parmfrow-and-layout.html
 par(mar=c(1,3,1,1)) # https://stackoverflow.com/questions/23050928/error-in-plot-new-figure-margins-too-large-scatter-plot
@@ -58,11 +58,21 @@ legend("bottomright", col=colors, categories, bg="white", lwd=1,
 # redo redo  +> clips offset
 
 par(mfrow=c(1,1)) 
-genliken <- t(read.csv(file = 'genliken.csv', header = FALSE,stringsAsFactors=FALSE))
-ymax  <- ncol(genliken) + 50
+indel300Count <- 0
+fileName <- "genliken2-1.csv"
+gln <- file(fileName,"r")
+idSize <- max(count.fields(gln,","))
+genliken <- t(read.csv(file = fileName, header = FALSE,stringsAsFactors=FALSE,
+                       col.names = paste0("V",seq_len(idSize)), fill = TRUE))
+  # to fill indel's (After row 12) with entries if they do not exist
+close.connection(gln)
+ymax  <- ncol(genliken) 
 # ymax <- 34
-xmax <- max(as.numeric(genliken[1:(nrow(genliken)-1),1:547]))
-plot(1, type="n", xlab="", ylab="", xlim=c(0, xmax), ylim=c(0, ymax))
+clipmatchRows <- 11
+# xmax <- max(as.numeric(genliken[1:(nrow(genliken)-1),1:ymax]))
+xmax <- max(as.numeric(genliken[1:11,1:ymax])) # update as added indel info, clip and match data is in rows 1 to 11, read qname in row 12]
+
+ plot(1, type="n", xlab="", ylab="", xlim=c(0, xmax), ylim=c(0, (ymax+50)) )
 
 # for (i in 1:length(region)) {
 qname <- genliken[12,1]
@@ -93,7 +103,28 @@ for (a in 1:ymax) {
    i=10  # rear hard clip
    x <- as.numeric(genliken[i:(i+1),a])
    lines(yclip ~x , col=rgb(0.0,0.9,0.0,0.9) , lwd=1 , pch=15 , type="l" )
+   
+   # indel
+  genlik <- nrow(genliken)  # for column a
+for (b in 13:genlik) {  # indel data starts at row 13
+  if (!(is.na(genliken[b,a]))) {
+    p <- as.numeric(genliken[b,a])
+    if((b %% 2) != 0) {  # odd have position, odd have indel (+/-) length
+      indelPos <- p
+      indelSize <- as.numeric(genliken[b+1,a])
+if ( (abs(indelSize > 220)) && (abs(indelSize <370)) ) {
+      indelScaled <- indelSize * 0.1 * ymax/300  #  a 300 indel = 1/10 of yscale
+      idx <- c(indelPos,indelPos)
+      #idy <- c(a,a+indelScaled)
+      idy <- c(320,320+indelScaled)
+      lines(idy ~idx , col=rgb(0.0,0.9,0.9,0.9) , lwd=1 , pch=15 , type="l" )
+      indel300Count <- indel300Count + 1
+}      
+     }   # lines(yclip ~x , col=rgb(0.0,0.9,0.0,0.9) , lwd=1 , pch=15 , type="l" )
+  }
 }
+}
+print (indel300Count)
 
 categories <- c("Soft Clip", "Hard Clip", "Match")
 colors <- c("red", "green", "blue")
